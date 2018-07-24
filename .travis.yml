@@ -1,0 +1,29 @@
+language: php
+
+php:
+    - 7.2
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install build-essential git -y
+  - git clone -b stable https://github.com/jedisct1/libsodium.git
+  - cd libsodium && sudo ./configure && sudo make check && sudo make install && cd ..
+
+install:
+  # Manually install libsodium, because the TravicCi image doesn't provide PHP7.2 with libsodium
+  - pecl install libsodium
+  - echo "extension=sodium.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+
+before_script:
+    - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+    - travis_retry composer self-update
+    - travis_retry composer install --no-interaction --prefer-source --dev
+
+script:
+    - vendor/bin/phpunit --coverage-clover=coverage.xml
+
+after_success:
+    - bash <(curl -s https://codecov.io/bash)
+
+services:
+  - redis-server

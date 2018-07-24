@@ -1,0 +1,32 @@
+{
+    "name": "00f100/fcphp-route",
+    "type": "package",
+    "version": "0.1.0",
+    "description": "Package to manipulate route for FcPhp",
+    "keywords": ["route", "manager", "fcphp"],
+    "homepage": "https://github.com/00f100/fcphp-route",
+    "authors": [
+        {
+            "name": "João Moraes",
+            "email": "joaomoraesbr@gmail.com",
+            "homepage": "https://github.com/00f100"
+        }
+    ],
+    "require": {
+        "php": ">=7.2",
+        "00f100/fcphp-autoload": "0.*",
+        "00f100/fcphp-cache": "0.*",
+        "00f100/fcphp-shttp": "0.*",
+        "00f100/fcphp-di": "0.*"
+    },
+    "require-dev": {
+        "00f100/phpdbug": "*",
+        "phpunit/phpunit": "6.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "FcPhp\\Route\\": "src/",
+            "FcPhp\\Route\\Test\\": "tests/"
+        }
+    }
+}
