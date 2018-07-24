@@ -3,11 +3,9 @@
 namespace FcPhp\Route
 {
     use FcPhp\Cache\Interfaces\ICache;
-    use FcPhp\Route\Interfaces\IRoute;
     use FcPhp\SHttp\Interfaces\ISEntity;
-    use FcPhp\Route\Interfaces\IEntity;
     use FcPhp\Autoload\Interfaces\IAutoload;
-    use FcPhp\Route\Interfaces\IRouteFactory;
+    use FcPhp\Route\Interfaces\{IRoute, IRouteFactory, IEntity};
 
     class Route implements IRoute
     {
@@ -41,6 +39,14 @@ namespace FcPhp\Route
 
         /**
          * Method to construct instance of Route
+         *
+         * @param FcPhp\SHttp\Interfaces\ISEntity $entity Security Entity
+         * @param FcPhp\Autoload\Interfaces\IAutoload $autoload Instance of Autoload
+         * @param FcPhp\Cache\Interfaces\ICache $cache Instance of Cache
+         * @param string $vendorPath Vendor path to Autoload
+         * @param FcPhp\Route\Interfaces\IRouteFactory $factory Instance of Route Factory
+         * @param bool $noCache No use cache
+         * @return void
          */
         public function __construct(ISEntity $entity, IAutoload $autoload, ICache $cache, string $vendorPath, IRouteFactory $factory, bool $noCache = false)
         {
@@ -59,36 +65,40 @@ namespace FcPhp\Route
             }
         }
 
-        public function match(string $method, string $route)
+        /**
+         * Method to find match between route and cache
+         *
+         * @param string $method Method to find
+         * @param string $route Route to find
+         * @return FcPhp\Route\Interfaces\IEntity
+         */
+        public function match(string $method, string $route) :IEntity
         {
+            $routeEntity = null;
             if(isset($this->routes[$method])) {
                 $itemRoute = explode('/', $route);
-                $routeEntity = null;
                 foreach($this->routes[$method] as $possibleRoute => $entity) {
                     $itemPossibleRoute = explode('/', $possibleRoute);
-                    foreach($itemRoute as $index => $part) {
-                        if(count($itemRoute) < count($itemPossibleRoute)){
-                            $partCurrent = [];
-                            break;
-                        }
-                        if(!isset($itemPossibleRoute[$index])) {
-                            $partCurrent = [];
-                            break;
-                        }
-                        $possiblePart = $itemPossibleRoute[$index];
-                        if(substr($possiblePart, 0, 1) != '{') {
-                            if($part == $itemPossibleRoute[$index]) {
-                                $partCurrent[] = $part;
+                    if(count($itemRoute) == count($itemPossibleRoute)){
+                        foreach($itemRoute as $index => $part) {
+                            $possiblePart = $itemPossibleRoute[$index];
+                            if(substr($possiblePart, 0, 1) != '{') {
+                                if($part == $itemPossibleRoute[$index]) {
+                                    $partCurrent[] = $part;
+                                }else{
+                                    $partCurrent = [];
+                                    $params = [];
+                                    break;
+                                }
                             }else{
-                                $partCurrent = [];
-                                break;
+                                $partCurrent[] = $part;
+                                $params[] = $part;
                             }
-                        }else{
-                            $partCurrent[] = $part;
-                        }
-                        if(count($itemRoute)-1 == $index) {
-                            if(count($partCurrent) > 0) {
-                                $routeEntity = $entity;
+                            if(count($itemRoute)-1 == $index) {
+                                if(count($partCurrent) == count($itemRoute)) {
+                                    $entity->setParams($params);
+                                    $routeEntity = $entity;
+                                }
                             }
                         }
                     }
@@ -105,7 +115,12 @@ namespace FcPhp\Route
             return $routeEntity;
         }
 
-        private function fixRoutes()
+        /**
+         * Method to fix routes
+         *
+         * @return void
+         */
+        private function fixRoutes() :void
         {
             $routeMap = [];
             foreach($this->routes as $version => $routes) {
@@ -123,6 +138,15 @@ namespace FcPhp\Route
             $this->routes = $routeMap;
         }
 
+        /**
+         * Method to add routes into map
+         *
+         * @param array $routeMap Map of routes
+         * @param string $method Method to find
+         * @param string $route Route to find
+         * @param FcPhp\Route\Interfaces\IEntity $entity Entity of Route
+         * @return void
+         */
         private function addRouteMap(array &$routeMap, string $method, string $route, IEntity $entity)
         {
             if(!isset($routeMap[$method])) {
@@ -131,6 +155,12 @@ namespace FcPhp\Route
             $routeMap[$method][$route] = $entity;
         }
 
+        /**
+         * Method to add routes into map
+         *
+         * @param array $route Configuration to route
+         * @return void
+         */
         private function defaults(array &$route)
         {
             $defaults = [

@@ -14,6 +14,7 @@ namespace FcPhp\Route
         private $statusCode;
         private $statusMessage;
         private $filter = [];
+        private $params = [];
 
         public function __construct(array $params = [])
         {
@@ -69,6 +70,16 @@ namespace FcPhp\Route
         public function getFullRoute()
         {
             return $this->fullRoute;
+        }
+
+        public function setParams(array $params)
+        {
+            $this->params = $params;
+        }
+
+        public function getParams() :array
+        {
+            return $this->params;
         }
     }
 }

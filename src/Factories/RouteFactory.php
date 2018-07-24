@@ -17,6 +17,9 @@ namespace FcPhp\Route\Factories
         public function getEntity(array $params = []) :IEntity
         {
             if($this->di instanceof IDi) {
+                if(!$this->di->has('FcPhp/Route/Entity')) {
+                    $this->di->setNonSingleton('FcPhp/Route/Entity', 'FcPhp\Route\Entity');
+                }
                 return $this->di->make('FcPhp/Route/Entity', [$params]);
             }
             return new Entity($params);
