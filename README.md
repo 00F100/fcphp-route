@@ -52,6 +52,8 @@ use FcPhp\Route\Route;
     // Cache information (see: https://github.com/00f100/fcphp-cache)
     $cache = CacheFacade::getInstance('tests/var/cache');
 
+
+
 ###########
 # EXECUTE
 ###########
