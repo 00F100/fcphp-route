@@ -55,7 +55,9 @@ namespace FcPhp\Route
             $this->cache = $cache;
             $this->autoload = $autoload;
             $this->factory = $factory;
-            if(empty($this->cache->get($this->key))) {
+            $this->routes = $this->cache->get($this->key);
+            if(empty($this->routes)) {
+                $this->routes = [];
                 $this->autoload->path($vendorPath, ['routes'], ['php']);
                 $this->routes = array_merge($this->routes, $this->autoload->get('routes'));
                 $this->fixRoutes();
@@ -96,8 +98,8 @@ namespace FcPhp\Route
                             }
                             if(count($itemRoute)-1 == $index) {
                                 if(count($partCurrent) == count($itemRoute)) {
-                                    $entity->setParams($params);
-                                    $routeEntity = $entity;
+                                    $entity['params'] = $params;
+                                    $routeEntity = $this->factory->getEntity($entity);
                                 }
                             }
                         }
@@ -128,11 +130,11 @@ namespace FcPhp\Route
                 foreach($routes as $index => $route) {
                     $this->defaults($route);
                     $printRoute = $routeBase;
-                    if(!empty($route->getRoute())) {
-                        $printRoute .= '/' . $route->getRoute();
+                    if(!empty($route['route'])) {
+                        $printRoute .= '/' . $route['route'];
                     }
-                    $route->setFullRoute($printRoute);
-                    $this->addRouteMap($routeMap, $route->getMethod(), $printRoute, $route);
+                    $route['fullRoute'] = $printRoute;
+                    $this->addRouteMap($routeMap, $route['method'], $printRoute, $route);
                 }
             }
             $this->routes = $routeMap;
@@ -144,10 +146,10 @@ namespace FcPhp\Route
          * @param array $routeMap Map of routes
          * @param string $method Method to find
          * @param string $route Route to find
-         * @param FcPhp\Route\Interfaces\IEntity $entity Entity of Route
+         * @param array $entity Entity of Route
          * @return void
          */
-        private function addRouteMap(array &$routeMap, string $method, string $route, IEntity $entity)
+        private function addRouteMap(array &$routeMap, string $method, string $route, array $entity)
         {
             if(!isset($routeMap[$method])) {
                 $routeMap[$method] = [];
@@ -171,7 +173,7 @@ namespace FcPhp\Route
                 'action' => null,
                 'filter' => [],
             ];
-            $route = $this->factory->getEntity(array_merge($defaults, $route));
+            $route = array_merge($defaults, $route);
         }
     }
 }

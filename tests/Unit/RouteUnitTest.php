@@ -5,8 +5,6 @@ use FcPhp\Route\Interfaces\IRoute;
 use FcPhp\Route\Interfaces\IEntity;
 use PHPUnit\Framework\TestCase;
 
-use FcPhp\Route\Factories\RouteFactory;
-
 class RouteUnitTest extends TestCase
 {
     public function setUp()
