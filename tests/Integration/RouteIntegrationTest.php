@@ -119,4 +119,49 @@ class RouteIntegrationTest extends TestCase
         $this->assertEquals($this->match->getParams(), [20]);
     }
 
+    public function testCustomRouteConstruct()
+    {
+        $di = DiFacade::getInstance();
+        $entity = new SEntity();
+        $autoload = new Autoload();
+
+        $cache = CacheFacade::getInstance('tests/var/cache');
+        $factory = new RouteFactory($di);
+        $vendorPath = 'tests/*/*/config';
+        $instance = new Route($entity, $autoload, $cache, $vendorPath, $factory, false, [
+            'v1/users' => [
+                [
+                    'method' => 'POST',
+                    'route' => 'test',
+                    'statusCode' => 204
+                ]
+            ]
+        ]);
+        $match = $instance->match('POST', 'v1/users/test');
+        $this->assertTrue($match instanceof IEntity);
+        $this->assertEquals($match->getStatusCode(), 204);
+    }
+
+    public function testCallbackFixRoute()
+    {
+        $this->instance->callback('initCallback', function(array $routes) {
+            $this->assertTrue(is_array($routes));
+        });
+        $this->instance->callback('matchCallback', function(array $routes, string $method, string $route, array $entity, IEntity $routeEntity) {
+            $this->assertTrue(is_array($routes));
+            // $this->assertEquals($method, 'POST');
+            // $this->assertEquals($route, 'v1/users/test');
+            // $this->assertTrue(is_array($entity));
+            // $this->assertTrue($routeEntity instanceof IEntity);
+        });
+        $this->instance->callback('notFoundCallback', function(array $routes, string $method, string $route, array $entity = [], IEntity $routeEntity = null) {
+            $this->assertTrue(is_array($routes));
+            $this->assertEquals($method, 'POST');
+            $this->assertEquals($route, 'v1/users/test');
+            $this->assertTrue(is_array($entity));
+
+        });
+        $match = $this->instance->match('POST', 'v1/users/test');
+    }
+
 }

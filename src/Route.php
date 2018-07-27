@@ -10,6 +10,10 @@ namespace FcPhp\Route
     class Route implements IRoute
     {
         const TTL_ROUTE = 84000;
+
+        /**
+         * @var string Key of cache
+         */
         private $key;
 
         /**
@@ -38,6 +42,21 @@ namespace FcPhp\Route
         public $routes = [];
 
         /**
+         * @var object Callback init match
+         */
+        private $initCallback;
+
+        /**
+         * @var object Callback match route
+         */
+        private $matchCallback;
+
+        /**
+         * @var object Callback not found route
+         */
+        private $notFoundCallback;
+
+        /**
          * Method to construct instance of Route
          *
          * @param FcPhp\SHttp\Interfaces\ISEntity $entity Security Entity
@@ -48,18 +67,18 @@ namespace FcPhp\Route
          * @param bool $noCache No use cache
          * @return void
          */
-        public function __construct(ISEntity $entity, IAutoload $autoload, ICache $cache, string $vendorPath, IRouteFactory $factory, bool $noCache = false)
+        public function __construct(ISEntity $entity, IAutoload $autoload, ICache $cache, string $vendorPath, IRouteFactory $factory, bool $noCache = false, array $routes = [])
         {
-            $this->key = md5('routes');
+            $this->key = md5(serialize($vendorPath) . serialize($routes));
             $this->entity = $entity;
             $this->cache = $cache;
             $this->autoload = $autoload;
             $this->factory = $factory;
             $this->routes = $this->cache->get($this->key);
             if(empty($this->routes)) {
-                $this->routes = [];
+                $this->routes = $routes;
                 $this->autoload->path($vendorPath, ['routes'], ['php']);
-                $this->routes = array_merge($this->routes, $this->autoload->get('routes'));
+                $this->routes = $this->merge($this->routes, $this->autoload->get('routes'));
                 $this->fixRoutes();
                 if(!$noCache) {
                     $this->cache->set($this->key, $this->routes, self::TTL_ROUTE);
@@ -77,8 +96,11 @@ namespace FcPhp\Route
         public function match(string $method, string $route) :IEntity
         {
             $routeEntity = null;
+            $this->initCallback($this->routes, $method, $route);
             if(isset($this->routes[$method])) {
                 $itemRoute = explode('/', $route);
+                // $params = [];
+                // $partCurrent = [];
                 foreach($this->routes[$method] as $possibleRoute => $entity) {
                     $itemPossibleRoute = explode('/', $possibleRoute);
                     if(count($itemRoute) == count($itemPossibleRoute)){
@@ -98,8 +120,12 @@ namespace FcPhp\Route
                             }
                             if(count($itemRoute)-1 == $index) {
                                 if(count($partCurrent) == count($itemRoute)) {
-                                    $entity['params'] = $params;
+                                    $entity['params'] = [];
+                                    if(isset($params)) {
+                                        $entity['params'] = $params;
+                                    }
                                     $routeEntity = $this->factory->getEntity($entity);
+                                    $this->matchCallback($this->routes, $method, $route, $entity, $routeEntity);
                                 }
                             }
                         }
@@ -113,6 +139,7 @@ namespace FcPhp\Route
                     'statusCode' => 404,
                     'statusMessage' => 'Not Found',
                 ]);
+                $this->notFoundCallback($this->routes, $method, $route, (isset($entity) ? $entity : []), (isset($routeEntity) ? $routeEntity : null));
             }
             return $routeEntity;
         }
@@ -174,6 +201,55 @@ namespace FcPhp\Route
                 'filter' => [],
             ];
             $route = array_merge($defaults, $route);
+        }
+
+        private function merge()
+        {
+            $routes = [];
+            $listRoutes = func_get_args();
+
+            foreach($listRoutes as $item) {
+                foreach($item as $route => $params) {
+                    if(!isset($routes[$route])) {
+                        $routes[$route] = [];
+                    }
+                    foreach($params as $param) {
+                        $routes[$route][] = $param;
+                    }
+                }
+            }
+            return $routes;
+        }
+
+        public function callback(string $name, object $callback) 
+        {
+            if(property_exists($this, $name)) {
+                $this->{$name} = $callback;
+            }
+        }
+
+        private function initCallback(array $routes, string $method, string $route)
+        {
+            if(!is_null($this->initCallback)) {
+                $initCallback = $this->initCallback;
+                $initCallback($routes, $method, $route);
+            }
+        }
+
+        private function matchCallback(array $routes, string $method, string $route, array $entity, IEntity $routeEntity)
+        {
+            if(!is_null($this->matchCallback)) {
+                $matchCallback = $this->matchCallback;
+                $matchCallback($routes, $method, $route, $entity, $routeEntity);
+            }
+        }
+
+        private function notFoundCallback(array $routes, string $method, string $route, array $entity = [], IEntity $routeEntity = null)
+        {
+            if(!is_null($this->notFoundCallback)) {
+                $notFoundCallback = $this->notFoundCallback;
+                $notFoundCallback($routes, $method, $route, $entity, $routeEntity);
+            }
         }
     }
 }
