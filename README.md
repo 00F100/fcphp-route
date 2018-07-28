@@ -22,77 +22,23 @@ or composer.json
 
 ## How to use
 
+After match route (same 404, 403) return instance of [FcPhp\Route\Entity](https://github.com/00F100/fcphp-route/blob/master/src/Interfaces/IEntity.php)
+
 ```php
 <?php
 
-use FcPhp\Di\Facades\DiFacade;
-use FcPhp\Cache\Facades\CacheFacade;
 use FcPhp\SHttp\SEntity;
-use FcPhp\Autoload\Autoload;
-use FcPhp\Route\RouteFactory;
-use FcPhp\Route\Route;
+use FcPhp\Route\Facades\RouteFacade;
 
+// See: https://github.com/00F100/fcphp-shttp
+$entity = new SEntity();
 
-###########
-# PREPARE
-###########
+// Config directories to autoload and cache
+$vendorPath = 'tests/*/*/config';
+$cachePath = 'tests/var/cache';
 
-    // Dependency injection  (see: https://github.com/00f100/fcphp-di)
-    $di = DiFacade::getInstance();
-
-    // Factory to create new instance of FcPhp\Route\Entity
-    $factory = new RouteFactory($di);
-
-    // Security Entity (see: https://github.com/00f100/fcphp-shttp)
-    $entity = new SEntity();
-
-    // Autoload array files (see: https://github.com/00f100/fcphp-autoload)
-    $autoload = new Autoload();
-
-    // Path to Autoload use
-    $vendorPath = 'vendor/*/*/config';
-
-    // Cache information (see: https://github.com/00f100/fcphp-cache)
-    $cache = CacheFacade::getInstance('path/to/cache');
-
-
-###########
-# EXECUTE
-###########
-
-// New instance of route
-$instance = new Route($entity, $autoload, $cache, $vendorPath, $factory);
-
-
-###########
-# CALLBACK
-###########
-
-// Init match route process
-$this->instance->callback('initCallback', function(array $routes) {
-
-    // Your code here ...
-
-});
-
-// Match route
-$this->instance->callback('matchCallback', function(array $routes, string $method, string $route, array $entity, IEntity $routeEntity) {
-
-    // Your code here ...
-
-});
-
-// Route not found
-$this->instance->callback('notFoundCallback', function(array $routes, string $method, string $route, array $entity = [], IEntity $routeEntity = null) {
-
-    // Your code here ...
-
-});
-
-
-###########
-# MATCH ROUTE
-###########
+// Init instance of Route
+$instance = RouteFacade::getInstance($entity, $vendorPath, $cachePath);
 
 // Match route into routes list
 $match = $instance->match('GET', 'v1/users/10');
@@ -102,6 +48,35 @@ echo get_class($match);
 
 // Print: 200
 echo $match->getStatusCode();
+```
+
+##### Callback's
+
+```php
+<?php
+
+use FcPhp\Route\Interfaces\IEntity;
+
+// Init match route process
+$instance->callback('initCallback', function(array $routes) {
+
+    // Your code here ...
+
+});
+
+// Match route
+$instance->callback('matchCallback', function(array $routes, string $method, string $route, array $entity, IEntity $routeEntity) {
+
+    // Your code here ...
+
+});
+
+// Route not found
+$instance->callback('notFoundCallback', function(array $routes, string $method, string $route, array $entity = [], IEntity $routeEntity = null) {
+
+    // Your code here ...
+
+});
 ```
 
 ##### [FcPhp\Route\Entity](https://github.com/00F100/fcphp-route/blob/master/src/Interfaces/IEntity.php)
