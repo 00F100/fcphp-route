@@ -30,5 +30,14 @@ namespace FcPhp\Route\Interfaces
          * @return FcPhp\Route\Interfaces\IEntity
          */
         public function match(string $method, string $route) :IEntity;
+
+        /**
+         * Method to configure callback
+         *
+         * @param string $name Name of callback
+         * @param object $callback Callback to execute
+         * @return void
+         */
+        public function callback(string $name, object $callback)  :void;
     }
 }

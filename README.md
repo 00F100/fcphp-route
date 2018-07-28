@@ -56,13 +56,43 @@ use FcPhp\Route\Route;
     $cache = CacheFacade::getInstance('path/to/cache');
 
 
-
 ###########
 # EXECUTE
 ###########
 
 // New instance of route
 $instance = new Route($entity, $autoload, $cache, $vendorPath, $factory);
+
+
+###########
+# CALLBACK
+###########
+
+// Init match route process
+$this->instance->callback('initCallback', function(array $routes) {
+
+    // Your code here ...
+
+});
+
+// Match route
+$this->instance->callback('matchCallback', function(array $routes, string $method, string $route, array $entity, IEntity $routeEntity) {
+
+    // Your code here ...
+
+});
+
+// Route not found
+$this->instance->callback('notFoundCallback', function(array $routes, string $method, string $route, array $entity = [], IEntity $routeEntity = null) {
+
+    // Your code here ...
+
+});
+
+
+###########
+# MATCH ROUTE
+###########
 
 // Match route into routes list
 $match = $instance->match('GET', 'v1/users/10');

@@ -25,6 +25,25 @@ class RouteIntegrationTest extends TestCase
 
         $this->instance = new Route($this->entity, $this->autoload, $this->cache, $this->vendorPath, $this->factory);
 
+
+        $this->instance->callback('initCallback', function(array $routes) {
+            $this->assertTrue(is_array($routes));
+        });
+        $this->instance->callback('matchCallback', function(array $routes, string $method, string $route, array $entity, IEntity $routeEntity) {
+            $this->assertTrue(is_array($routes));
+            $this->assertTrue(!empty($method));
+            $this->assertTrue(!empty($route));
+            $this->assertTrue(is_array($entity));
+            $this->assertTrue($routeEntity instanceof IEntity);
+        });
+        $this->instance->callback('notFoundCallback', function(array $routes, string $method, string $route, array $entity = [], IEntity $routeEntity = null) {
+            $this->assertTrue(is_array($routes));
+            $this->assertTrue(!empty($method));
+            $this->assertTrue(!empty($route));
+            $this->assertTrue(is_array($entity));
+
+        });
+
         $this->match = $this->instance->match('GET', 'v1/users/10');
     }
 
@@ -102,6 +121,12 @@ class RouteIntegrationTest extends TestCase
         $this->assertEquals($this->match->getStatusCode(), 200);
     }
 
+    public function testRouteNotFound()
+    {
+        $match = $this->instance->match('POST', 'tesssst');
+        $this->assertEquals($match->getStatusCode(), 404);
+    }
+
     public function testStatusMessage()
     {
         $this->assertEquals($this->match->getStatusMessage(), null);
@@ -142,26 +167,28 @@ class RouteIntegrationTest extends TestCase
         $this->assertEquals($match->getStatusCode(), 204);
     }
 
-    public function testCallbackFixRoute()
+    public function testCustomRouteNotPermissionConstruct()
     {
-        $this->instance->callback('initCallback', function(array $routes) {
-            $this->assertTrue(is_array($routes));
-        });
-        $this->instance->callback('matchCallback', function(array $routes, string $method, string $route, array $entity, IEntity $routeEntity) {
-            $this->assertTrue(is_array($routes));
-            // $this->assertEquals($method, 'POST');
-            // $this->assertEquals($route, 'v1/users/test');
-            // $this->assertTrue(is_array($entity));
-            // $this->assertTrue($routeEntity instanceof IEntity);
-        });
-        $this->instance->callback('notFoundCallback', function(array $routes, string $method, string $route, array $entity = [], IEntity $routeEntity = null) {
-            $this->assertTrue(is_array($routes));
-            $this->assertEquals($method, 'POST');
-            $this->assertEquals($route, 'v1/users/test');
-            $this->assertTrue(is_array($entity));
+        $di = DiFacade::getInstance();
+        $entity = new SEntity();
+        $autoload = new Autoload();
 
-        });
-        $match = $this->instance->match('POST', 'v1/users/test');
+        $cache = CacheFacade::getInstance('tests/var/cache');
+        $factory = new RouteFactory($di);
+        $vendorPath = 'tests/*/*/config';
+        $instance = new Route($entity, $autoload, $cache, $vendorPath, $factory, false, [
+            'v1/users' => [
+                [
+                    'method' => 'POST',
+                    'route' => 'test',
+                    'rule' => 'permission',
+                    'statusCode' => 204
+                ]
+            ]
+        ]);
+        $match = $instance->match('POST', 'v1/users/test');
+        $this->assertTrue($match instanceof IEntity);
+        $this->assertEquals($match->getStatusCode(), 403);
     }
 
 }

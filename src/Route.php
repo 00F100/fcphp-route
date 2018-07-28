@@ -99,8 +99,6 @@ namespace FcPhp\Route
             $this->initCallback($this->routes, $method, $route);
             if(isset($this->routes[$method])) {
                 $itemRoute = explode('/', $route);
-                // $params = [];
-                // $partCurrent = [];
                 foreach($this->routes[$method] as $possibleRoute => $entity) {
                     $itemPossibleRoute = explode('/', $possibleRoute);
                     if(count($itemRoute) == count($itemPossibleRoute)){
@@ -124,7 +122,18 @@ namespace FcPhp\Route
                                     if(isset($params)) {
                                         $entity['params'] = $params;
                                     }
+
                                     $routeEntity = $this->factory->getEntity($entity);
+                                    if(!is_null($routeEntity->getRule())) {
+                                        if(!$this->entity->check($routeEntity->getRule())) {
+                                            $routeEntity = $this->factory->getEntity([
+                                                'method' => $method,
+                                                'route' => $route,
+                                                'statusCode' => 403,
+                                                'statusMessage' => 'Forbidden',
+                                            ]);
+                                        }
+                                    }
                                     $this->matchCallback($this->routes, $method, $route, $entity, $routeEntity);
                                 }
                             }
@@ -142,6 +151,20 @@ namespace FcPhp\Route
                 $this->notFoundCallback($this->routes, $method, $route, (isset($entity) ? $entity : []), (isset($routeEntity) ? $routeEntity : null));
             }
             return $routeEntity;
+        }
+
+        /**
+         * Method to configure callback
+         *
+         * @param string $name Name of callback
+         * @param object $callback Callback to execute
+         * @return void
+         */
+        public function callback(string $name, object $callback)  :void
+        {
+            if(property_exists($this, $name)) {
+                $this->{$name} = $callback;
+            }
         }
 
         /**
@@ -176,7 +199,7 @@ namespace FcPhp\Route
          * @param array $entity Entity of Route
          * @return void
          */
-        private function addRouteMap(array &$routeMap, string $method, string $route, array $entity)
+        private function addRouteMap(array &$routeMap, string $method, string $route, array $entity) :void
         {
             if(!isset($routeMap[$method])) {
                 $routeMap[$method] = [];
@@ -190,7 +213,7 @@ namespace FcPhp\Route
          * @param array $route Configuration to route
          * @return void
          */
-        private function defaults(array &$route)
+        private function defaults(array &$route) :void
         {
             $defaults = [
                 'statusCode' => 200,
@@ -203,7 +226,15 @@ namespace FcPhp\Route
             $route = array_merge($defaults, $route);
         }
 
-        private function merge()
+        /**
+         * Method to merge routes
+         *
+         * @param array $array1 Array Route A
+         * @param array $array2 Array Route B
+         * @param array ...
+         * @return array
+         */
+        private function merge() :array
         {
             $routes = [];
             $listRoutes = func_get_args();
@@ -221,14 +252,15 @@ namespace FcPhp\Route
             return $routes;
         }
 
-        public function callback(string $name, object $callback) 
-        {
-            if(property_exists($this, $name)) {
-                $this->{$name} = $callback;
-            }
-        }
-
-        private function initCallback(array $routes, string $method, string $route)
+        /**
+         * Method to configure callback
+         *
+         * @param array $routes List of routes
+         * @param string $method Method of request
+         * @param string $route Route to match
+         * @return void
+         */
+        private function initCallback(array $routes, string $method, string $route) :void
         {
             if(!is_null($this->initCallback)) {
                 $initCallback = $this->initCallback;
@@ -236,7 +268,17 @@ namespace FcPhp\Route
             }
         }
 
-        private function matchCallback(array $routes, string $method, string $route, array $entity, IEntity $routeEntity)
+        /**
+         * Method to configure callback
+         *
+         * @param array $routes List of routes
+         * @param string $method Method of request
+         * @param string $route Route to match
+         * @param array $entity Entity into array
+         * @param FcPhp\Route\Interfaces\IEntity $routeEntity Entity into class
+         * @return void
+         */
+        private function matchCallback(array $routes, string $method, string $route, array $entity, IEntity $routeEntity) :void
         {
             if(!is_null($this->matchCallback)) {
                 $matchCallback = $this->matchCallback;
@@ -244,7 +286,17 @@ namespace FcPhp\Route
             }
         }
 
-        private function notFoundCallback(array $routes, string $method, string $route, array $entity = [], IEntity $routeEntity = null)
+        /**
+         * Method to configure callback
+         *
+         * @param array $routes List of routes
+         * @param string $method Method of request
+         * @param string $route Route to match
+         * @param array $entity Entity into array
+         * @param FcPhp\Route\Interfaces\IEntity $routeEntity Entity into class
+         * @return void
+         */
+        private function notFoundCallback(array $routes, string $method, string $route, array $entity = [], IEntity $routeEntity = null) :void
         {
             if(!is_null($this->notFoundCallback)) {
                 $notFoundCallback = $this->notFoundCallback;

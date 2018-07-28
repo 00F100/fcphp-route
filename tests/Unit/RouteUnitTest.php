@@ -46,6 +46,24 @@ class RouteUnitTest extends TestCase
         $vendorPath = 'tests/*/*/config';
 
         $this->instance = new Route($this->entity, $this->autoload, $this->cache, $vendorPath, $this->factory);
+
+        $this->instance->callback('initCallback', function(array $routes) {
+            $this->assertTrue(is_array($routes));
+        });
+        $this->instance->callback('matchCallback', function(array $routes, string $method, string $route, array $entity, IEntity $routeEntity) {
+            $this->assertTrue(is_array($routes));
+            $this->assertTrue(!empty($method));
+            $this->assertTrue(!empty($route));
+            $this->assertTrue(is_array($entity));
+            $this->assertTrue($routeEntity instanceof IEntity);
+        });
+        $this->instance->callback('notFoundCallback', function(array $routes, string $method, string $route, array $entity = [], IEntity $routeEntity = null) {
+            $this->assertTrue(is_array($routes));
+            $this->assertTrue(!empty($method));
+            $this->assertTrue(!empty($route));
+            $this->assertTrue(is_array($entity));
+
+        });
     }
 
     public function testInstance()
@@ -80,6 +98,12 @@ class RouteUnitTest extends TestCase
         $match = $instance->match('GET', 'route/to/test/another/infor/mation');
         $this->assertTrue($match instanceof IEntity);
         $this->assertEquals($match->getStatusCode(), 404);
+    }
+
+    public function testRouteNotFound()
+    {
+        $match = $this->instance->match('POST', 'tesssst');
+        $this->assertEquals($match->getStatusCode(), 200);
     }
 
 }
