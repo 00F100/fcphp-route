@@ -4,13 +4,25 @@ return [
     'v1/users' => [
         [
             'action' => 'Controller@getAll',
+            'view' => [
+                'theme' => 'default',
+                'layout' => 'users.list',
+            ],
         ],
         [
-            'method' => 'GET',
+            'method' => 'POST',
             'route' => '{parentId}',
             'action' => 'Controller@getByParent',
+            
+            // 'thread' => false,
+            'view' => 'json',
+
             'filter' => [
                 'default' => 'escape',
+                'body' => [
+                    'type' => 'xml',
+                    'content' => 'xmlparser'
+                ],
                 'query' => [
                     'name' => 'raw',
                 ]
@@ -23,7 +35,10 @@ return [
             'filter' => [
                 'default' => 'escape',
                 'body' => [
-                    'name' => 'raw',
+                    'type' => 'json',
+                    'content' => [
+                        'name' => 'raw',
+                    ]
                 ]
             ]
         ]
