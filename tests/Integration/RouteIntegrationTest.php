@@ -57,16 +57,16 @@ class RouteIntegrationTest extends TestCase
     public function testFactoryNonDi()
     {
         $entity = new SEntity();
-        // $autoload = new Autoload();
+        $autoload = new Autoload();
 
-        // $cache = CacheFacade::getInstance('tests/var/cache');
-        // $factory = new RouteFactory();
+        $cache = CacheFacade::getInstance('tests/var/cache');
+        $factory = new RouteFactory();
 
-        // $instance = new Route($entity, $autoload, $cache, $this->vendorPath, $factory);
-        $instance = RouteFacade::getInstance($entity, $this->vendorPath, 'tests/var/cache');
+        $instance = new Route($entity, $autoload, $cache, $this->vendorPath, $factory);
+        // $instance = RouteFacade::getInstance($entity, $this->vendorPath, 'tests/var/cache');
         $this->assertTrue($instance instanceof IRoute);
         $match = $instance->match('GET', 'v1/users/10');
-        $this->assertEquals($match->getStatusCode(), 200);
+        $this->assertEquals(200, $match->getStatusCode());
     }
 
     public function testMatchRoute()
@@ -114,8 +114,12 @@ class RouteIntegrationTest extends TestCase
     {
         $this->assertEquals($this->match->getFilter(), [
             'default' => 'escape',
+            'body' => [
+                'type' => 'xml',
+                'content' => 'xmlparser'
+            ],
             'query' => [
-                'name' => 'raw'
+                'name' => 'raw',
             ]
         ]);
     }
@@ -182,23 +186,8 @@ class RouteIntegrationTest extends TestCase
 
     public function testCustomRouteNotPermissionConstruct()
     {
-        // $di = DiFacade::getInstance();
         $entity = new SEntity();
-        // $autoload = new Autoload();
-
-        // $cache = CacheFacade::getInstance('tests/var/cache');
-        // $factory = new RouteFactory($di);
         $vendorPath = 'tests/*/*/config';
-        // $instance = new Route($entity, $autoload, $cache, $vendorPath, $factory, false, [
-        //     'v1/users' => [
-        //         [
-        //             'method' => 'POST',
-        //             'route' => 'test',
-        //             'rule' => 'permission',
-        //             'statusCode' => 204
-        //         ]
-        //     ]
-        // ]);
         $instance = RouteFacade::getInstance($entity, $vendorPath, 'tests/var/cache', [
             'v1/users' => [
                 [

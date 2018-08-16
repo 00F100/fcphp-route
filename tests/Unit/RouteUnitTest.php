@@ -106,4 +106,48 @@ class RouteUnitTest extends TestCase
         $this->assertEquals($match->getStatusCode(), 200);
     }
 
+
+
+    public function testCustomRouteNotPermissionConstruct()
+    {
+
+        $entity = $this->createMock('FcPhp\SHttp\Interfaces\ISEntity');
+        $entity
+            ->expects($this->any())
+            ->method('check')
+            ->will($this->returnValue(false));
+
+        $factory = $this->createMock('FcPhp\Route\Interfaces\IRouteFactory');
+        $routeEntity = $this->createMock('FcPhp\Route\Interfaces\IEntity');
+        $routeEntity
+            ->expects($this->any())
+            ->method('getStatusCode')
+            ->will($this->returnValue(403));
+        $routeEntity
+            ->expects($this->any())
+            ->method('getRule')
+            ->will($this->returnValue('permission'));
+        $routeEntity
+            ->expects($this->any())
+            ->method('getMethod')
+            ->will($this->returnValue('POST'));
+        $routeEntity
+            ->expects($this->any())
+            ->method('getRoute')
+            ->will($this->returnValue('{parentCode}'));
+
+        $factory
+            ->expects($this->any())
+            ->method('getEntity')
+            ->will($this->returnValue($routeEntity));
+
+
+
+        $vendorPath = 'tests/*/*/config';
+        $instance = new Route($entity, $this->autoload, $this->cache, $vendorPath, $factory);
+        $match = $instance->match('GET', 'v1/users/10');
+        $this->assertTrue($match instanceof IEntity);
+        $this->assertEquals($match->getStatusCode(), 403);
+    }
+
 }

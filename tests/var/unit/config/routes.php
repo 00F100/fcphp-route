@@ -10,7 +10,7 @@ return [
             ],
         ],
         [
-            'method' => 'POST',
+            'method' => 'GET',
             'route' => '{parentId}',
             'action' => 'Controller@getByParent',
             
