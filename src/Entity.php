@@ -52,6 +52,11 @@ namespace FcPhp\Route
         private $params = [];
 
         /**
+         * @var array URL Query string
+         */
+        private $query = [];
+
+        /**
          * Method to construct instance
          *
          * @param array $params Params to populate Entity
@@ -76,6 +81,16 @@ namespace FcPhp\Route
         public function getMethod() :string
         {
             return $this->method;
+        }
+
+        /**
+         * Method to return url query string
+         *
+         * @return string
+         */
+        public function getQuery() :string
+        {
+            return $this->query;
         }
 
         /**
