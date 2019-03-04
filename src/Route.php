@@ -96,6 +96,8 @@ namespace FcPhp\Route
         public function match(string $method, string $route) :IEntity
         {
             $routeEntity = null;
+            $route = explode('?', $route);
+            $route = current($route);
             $this->initCallback($this->routes, $method, $route);
             if(isset($this->routes[$method])) {
                 $itemRoute = explode('/', $route);
